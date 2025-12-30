@@ -1,6 +1,8 @@
-const express = require('express');
-const app = express();
+const app = require('./app');
 
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-module.exports = app;
+// Lance le serveur et reste en écoute
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
