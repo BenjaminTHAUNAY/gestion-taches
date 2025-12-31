@@ -18,3 +18,5 @@ const taskListRoutes = require('./routes/tasklist');
 
 app.use('/lists', taskListRoutes);
 
+const taskRoutes = require('./routes/task');
+app.use('/tasks', taskRoutes);
