@@ -13,3 +13,8 @@ app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 
 module.exports = app;
+
+const taskListRoutes = require('./routes/tasklist');
+
+app.use('/lists', taskListRoutes);
+
