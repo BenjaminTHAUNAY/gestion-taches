@@ -1,46 +1,51 @@
 import { useState } from "react";
-import api from "../api/client";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", {
-        email,
-        password,
+      const res = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      // Stocke le token JWT
-      localStorage.setItem("token", res.data.token);
+      if (!res.ok) {
+        throw new Error("Identifiants incorrects");
+      }
 
-      // Redirection vers les listes
-      window.location.href = "/lists";
+      const data = await res.json();
+
+      // 👉 stockage du token
+      localStorage.setItem("token", data.token);
+
+      // redirection vers les listes
+      navigate("/lists");
     } catch (err) {
-      setError("Email ou mot de passe incorrect");
-    } finally {
-      setLoading(false);
+      setError(err.message);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "50px auto" }}>
-      <h2>Connexion</h2>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div>
+      <h1>Connexion</h1>
 
       <form onSubmit={handleSubmit}>
         <div>
+          <label>Email</label>
           <input
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -48,22 +53,21 @@ export default function Login() {
         </div>
 
         <div>
+          <label>Mot de passe</label>
           <input
             type="password"
-            placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
+        <button type="submit">Se connecter</button>
       </form>
 
-      {/* Lien vers l'inscription */}
-      <p style={{ marginTop: 10 }}>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <p>
         Pas encore de compte ? <a href="/register">Créer un compte</a>
       </p>
     </div>
