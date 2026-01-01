@@ -1,15 +1,18 @@
-import { useState } from 'react';
-import Login from './pages/Login';
-import Lists from './pages/Lists';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Lists from "./pages/Lists";
 
 function App() {
-  const [logged, setLogged] = useState(!!localStorage.getItem('token'));
-
-  if (!logged) {
-    return <Login onLogin={() => setLogged(true)} />;
-  }
-
-  return <Lists />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/lists" element={<Lists />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

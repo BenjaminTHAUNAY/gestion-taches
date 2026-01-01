@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../api/client";
 
-export default function Login() {
+export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -13,18 +13,18 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", {
+      const res = await api.post("/auth/register", {
         email,
         password,
       });
 
-      // Stocke le token JWT
+      // On stocke le token
       localStorage.setItem("token", res.data.token);
 
       // Redirection vers les listes
       window.location.href = "/lists";
     } catch (err) {
-      setError("Email ou mot de passe incorrect");
+      setError("Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }
@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <div style={{ maxWidth: 400, margin: "50px auto" }}>
-      <h2>Connexion</h2>
+      <h2>Inscription</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -58,14 +58,9 @@ export default function Login() {
         </div>
 
         <button type="submit" disabled={loading}>
-          {loading ? "Connexion..." : "Se connecter"}
+          {loading ? "Inscription..." : "S'inscrire"}
         </button>
       </form>
-
-      {/* Lien vers l'inscription */}
-      <p style={{ marginTop: 10 }}>
-        Pas encore de compte ? <a href="/register">Créer un compte</a>
-      </p>
     </div>
   );
 }
