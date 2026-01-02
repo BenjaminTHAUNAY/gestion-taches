@@ -5,20 +5,17 @@ module.exports = (sequelize, DataTypes) => {
   class ListMember extends Model {
     static associate(models) {
       ListMember.belongsTo(models.User, { foreignKey: 'userId' });
-      ListMember.belongsTo(models.TaskList, { foreignKey: 'listId' });
+      ListMember.hasMany(models.Task, { foreignKey: 'listId', sourceKey: 'listId' });
     }
   }
 
   ListMember.init({
-    role: {
-      type: DataTypes.ENUM('owner', 'editor', 'reader'),
-      allowNull: false
-    }
+    listId: { type: DataTypes.INTEGER, allowNull: false },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    role: { type: DataTypes.STRING, defaultValue: 'reader' }
   }, {
     sequelize,
-    modelName: 'ListMember',
-    timestamps: true,
-    updatedAt: false
+    modelName: 'ListMember'
   });
 
   return ListMember;

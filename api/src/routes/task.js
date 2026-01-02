@@ -2,29 +2,21 @@
 
 const express = require('express');
 const router = express.Router();
-
-const { Task, TaskList, ListMember } = require('../../models');
+const { Task, ListMember } = require('../models'); // plus de TaskList
 const auth = require('../middleware/auth');
 
+// Middleware pour vérifier les droits sur une tâche
 const checkRole = (allowedRoles) => {
   return async (req, res, next) => {
-    const listId = req.params.listId || req.body.listId;
+    const taskId = req.params.id || req.body.taskId;
 
-    const list = await TaskList.findByPk(listId);
-    if (!list) {
-      return res.status(404).json({ error: 'List not found' });
-    }
+    const task = await Task.findByPk(taskId);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
 
-    if (!list.isCoop) {
-      if (list.ownerId !== req.user.id) {
-        return res.status(403).json({ error: 'Forbidden' });
-      }
-      return next();
-    }
-
+    // Vérifie si l'utilisateur est membre de la liste
     const member = await ListMember.findOne({
       where: {
-        listId,
+        listId: task.listId,
         userId: req.user.id
       }
     });
@@ -33,105 +25,61 @@ const checkRole = (allowedRoles) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    req.task = task; // passe la tâche au prochain middleware
     next();
   };
 };
-router.get(
-  '/:listId',
-  auth,
-  checkRole(['owner', 'editor', 'reader']),
-  async (req, res) => {
-    const { page = 1, limit = 10, status, sort = 'createdAt' } = req.query;
 
-    const where = { listId: req.params.listId };
-    if (status) where.status = status;
+// GET /tasks/:id - récupérer une tâche
+router.get('/:id', auth, checkRole(['owner', 'editor', 'reader']), async (req, res) => {
+  res.json(req.task);
+});
 
-    const tasks = await Task.findAndCountAll({
-      where,
-      limit: parseInt(limit),
-      offset: (page - 1) * limit,
-      order: [[sort, 'DESC']]
-    });
+// POST /tasks - créer une tâche
+router.post('/', auth, checkRole(['owner', 'editor']), async (req, res) => {
+  const task = await Task.create({
+    listId: req.body.listId,
+    title: req.body.title,
+    dueDate: req.body.dueDate,
+    status: req.body.status
+  });
+  res.status(201).json(task);
+});
 
-    res.json({
-      total: tasks.count,
-      page: parseInt(page),
-      pages: Math.ceil(tasks.count / limit),
-      data: tasks.rows
-    });
-  }
-);
-router.post(
-  '/',
-  auth,
-  checkRole(['owner', 'editor']),
-  async (req, res) => {
-    const task = await Task.create({
-      listId: req.body.listId,
-      title: req.body.title,
-      dueDate: req.body.dueDate,
-      status: req.body.status
-    });
+// PUT /tasks/:id - mettre à jour une tâche
+router.put('/:id', auth, checkRole(['owner', 'editor']), async (req, res) => {
+  const task = req.task;
 
-    res.status(201).json(task);
-  }
-);
-router.put(
-  '/:id',
-  auth,
-  async (req, res) => {
-    const task = await Task.findByPk(req.params.id);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
-    // Vérification des droits
-    req.body.listId = task.listId;
-    await checkRole(['owner', 'editor'])(req, res, async () => {
-      // Précondition obligatoire
-      const clientDate = req.headers['if-unmodified-since'];
-      if (!clientDate) {
-        return res.status(428).json({
-          error: 'Precondition Required',
-          message: 'If-Unmodified-Since header is required'
-        });
-      }
-
-      // Détection de conflit
-      if (new Date(clientDate).getTime() !== task.updatedAt.getTime()) {
-        return res.status(409).json({
-          error: 'Conflict',
-          message: 'Task has been modified by another user'
-        });
-      }
-
-      await task.update({
-        title: req.body.title,
-        done: req.body.done,
-        dueDate: req.body.dueDate,
-        status: req.body.status
-      });
-
-      res.json(task);
+  // Précondition obligatoire pour éviter les conflits
+  const clientDate = req.headers['if-unmodified-since'];
+  if (!clientDate) {
+    return res.status(428).json({
+      error: 'Precondition Required',
+      message: 'If-Unmodified-Since header is required'
     });
   }
-);
 
-router.delete(
-  '/:id',
-  auth,
-  async (req, res) => {
-    const task = await Task.findByPk(req.params.id);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
-    req.body.listId = task.listId;
-    await checkRole(['owner', 'editor'])(req, res, async () => {
-      await task.destroy();
-      res.status(204).end();
+  if (new Date(clientDate).getTime() !== task.updatedAt.getTime()) {
+    return res.status(409).json({
+      error: 'Conflict',
+      message: 'Task has been modified by another user'
     });
   }
-);
+
+  await task.update({
+    title: req.body.title,
+    done: req.body.done,
+    dueDate: req.body.dueDate,
+    status: req.body.status
+  });
+
+  res.json(task);
+});
+
+// DELETE /tasks/:id - supprimer une tâche
+router.delete('/:id', auth, checkRole(['owner', 'editor']), async (req, res) => {
+  await req.task.destroy();
+  res.status(204).end();
+});
 
 module.exports = router;

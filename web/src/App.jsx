@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Lists from "./pages/Lists";
@@ -15,33 +15,31 @@ function App() {
   const [selectedList, setSelectedList] = useState(null);
 
   return (
-    <Router>
-      <Routes>
-        {/* Authentification */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <Routes>
+      {/* Authentification */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-        {/* Routes protégées */}
-        <Route
-          path="/lists"
-          element={
-            <PrivateRoute>
-              {selectedList ? (
-                <ListDetail
-                  list={selectedList}
-                  onBack={() => setSelectedList(null)}
-                />
-              ) : (
-                <Lists onSelect={(list) => setSelectedList(list)} />
-              )}
-            </PrivateRoute>
-          }
-        />
+      {/* Routes protégées */}
+      <Route
+        path="/lists"
+        element={
+          <PrivateRoute>
+            {selectedList ? (
+              <ListDetail
+                list={selectedList}
+                onBack={() => setSelectedList(null)}
+              />
+            ) : (
+              <Lists onSelect={(list) => setSelectedList(list)} />
+            )}
+          </PrivateRoute>
+        }
+      />
 
-        {/* Redirection par défaut */}
-        <Route path="*" element={<Navigate to="/lists" />} />
-      </Routes>
-    </Router>
+      {/* Redirection par défaut */}
+      <Route path="*" element={<Navigate to="/lists" />} />
+    </Routes>
   );
 }
 

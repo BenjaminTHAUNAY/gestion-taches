@@ -3,42 +3,36 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-
-// Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const taskRoutes = require('./routes/task');
-const listRoutes = require('./routes/tasklist');
 
 const app = express();
 
-// Middlewares globaux
+// Middlewares
 app.use(cors());
-app.use(morgan('dev'));
 app.use(express.json());
+app.use(morgan('dev'));
 
 // Routes
-app.use('/auth', authRoutes);       // inscription / login
-app.use('/users', userRoutes);      // profil utilisateur
-app.use('/tasks', taskRoutes);      // CRUD tâches + conflits
-app.use('/lists', listRoutes);      // CRUD listes + gestion membres
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/tasks', taskRoutes);
 
-// Route racine pour tester le serveur
+// Route par défaut
 app.get('/', (req, res) => {
-  res.json({ message: 'API Task Manager is running 🚀' });
+  res.json({ message: 'API Task Manager is running ✅' });
 });
 
-// Middleware 404
+// Gestion des erreurs 404
 app.use((req, res, next) => {
-  res.status(404).json({ error: 'Not Found' });
+  res.status(404).json({ error: 'Route not found' });
 });
 
-// Middleware gestion erreurs
+// Gestion des erreurs générales
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error'
-  });
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 module.exports = app;
