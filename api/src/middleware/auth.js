@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const { Sequelize } = require('sequelize');
 
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -22,6 +23,12 @@ module.exports = (req, res, next) => {
 
     next();
   } catch (err) {
+    console.error("AUTH ERROR:", err);
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
 };
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  dialect: 'postgres',
+  logging: console.log,  // <-- active le log SQL
+});
