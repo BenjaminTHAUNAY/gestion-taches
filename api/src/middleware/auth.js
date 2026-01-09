@@ -1,7 +1,11 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { Sequelize } = require('sequelize');
 
+/**
+ * Middleware d'authentification JWT
+ * Vérifie la présence et la validité du token JWT dans l'en-tête Authorization
+ * Ajoute req.userId à la requête si le token est valide
+ */
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -16,19 +20,11 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // ✅ ON NE MET PAS user, ON MET userId
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
     req.userId = decoded.id;
-
     next();
   } catch (err) {
     console.error("AUTH ERROR:", err);
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
 };
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: 'postgres',
-  logging: console.log,  // <-- active le log SQL
-});
