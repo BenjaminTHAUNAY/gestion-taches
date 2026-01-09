@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import api from "../api/client";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -13,35 +14,19 @@ export default function Register() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:3000/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Erreur lors de l’inscription");
-      }
-
-      const data = await res.json();
-
-      // 👉 stockage du token
-      localStorage.setItem("token", data.token);
-
-      // redirection vers les listes
-      navigate("/lists");
+      await api.post("/auth/register", { email, password });
+      // Après inscription, rediriger vers login
+      navigate("/login");
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || "Erreur lors de l'inscription");
     }
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
       <h1>Inscription</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div>
           <label>Email</label>
           <input
@@ -68,7 +53,7 @@ export default function Register() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <p>
-        Déjà un compte ? <a href="/login">Se connecter</a>
+        Déjà un compte ? <Link to="/login">Se connecter</Link>
       </p>
     </div>
   );
